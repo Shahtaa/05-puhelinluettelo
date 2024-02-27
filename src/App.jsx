@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import Person from './components/Person';
+import Filter from './components/Filter';
+import PersonForm from './components/PersonForm';
+import Persons from './components/Persons';
 
 const App = () => {
     const [persons, setPersons] = useState([
@@ -28,6 +30,7 @@ const App = () => {
         );
         setFilteredPersons(filtered);
     };
+
     const addPerson = (event) => {
         event.preventDefault();
         const nameExists = persons.some(person => person.name === newName);
@@ -42,37 +45,25 @@ const App = () => {
         setNewNumber('');
     };
 
-
-
     return (
         <div>
             <h2>Phonebook</h2>
-            <div>
-                filter shown with<input
-                    type="search"
-                    onChange={handleChange}
-                    value={searchInput} />
-            </div>
 
-            <h2>add a new</h2>
-            <form onSubmit={addPerson}>
-                <div>
-                    name: <input value={newName} onChange={handleNameChange} />
-                </div>
-                <div>
-                    number: <input value={newNumber} onChange={handleNumberChange} />
-                </div>
-                <div>
-                    <button type="submit">add</button>
-                </div>
-            </form>
+            <Filter value={searchInput} handleChange={handleChange} />
 
-            <h2>Numbers</h2>
+            <h3>Add a new</h3>
 
-            {filteredPersons.map((person, index) => (
-                <Person key={index} person={person} />
-            ))}
+            <PersonForm
+                newName={newName}
+                newNumber={newNumber}
+                handleNameChange={handleNameChange}
+                handleNumberChange={handleNumberChange}
+                addPerson={addPerson}
+            />
 
+            <h3>Numbers</h3>
+
+            <Persons persons={filteredPersons} />
         </div>
     );
 };
