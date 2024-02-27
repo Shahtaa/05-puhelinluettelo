@@ -2,8 +2,9 @@
 const Person = ({ person }) => {
     return (
         <div>
-            <p>{person.name} {person.number}</p>
+            {person.name} {person.number}
         </div>
+
     );
 };
 
