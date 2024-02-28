@@ -1,19 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import Filter from './components/Filter';
 import PersonForm from './components/PersonForm';
 import Persons from './components/Persons';
 
 const App = () => {
-    const [persons, setPersons] = useState([
-        { name: 'Arto Hellas', number: '040-123456' },
-        { name: 'Ada Lovelace', number: '39-44-5323523' },
-        { name: 'Dan Abramov', number: '12-43-234345' },
-        { name: 'Mary Poppendieck', number: '39-23-6423122' }
-    ]);
+    const [persons, setPersons] = useState([]);
     const [newName, setNewName] = useState('');
     const [newNumber, setNewNumber] = useState('');
     const [searchInput, setSearchInput] = useState('');
-    const [filteredPersons, setFilteredPersons] = useState(persons);
+    const [filteredPersons, setFilteredPersons] = useState([]);
+
+
+    const hook = () => {
+        console.log('effect')
+        axios
+            .get('http://localhost:3001/persons')
+            .then(response => {
+                console.log('promise fulfilled')
+                setPersons(response.data);
+                setFilteredPersons(response.data);
+            })
+    }
+
+    useEffect(hook, [])
 
     const handleNameChange = (event) => {
         setNewName(event.target.value);
@@ -24,11 +34,11 @@ const App = () => {
     };
 
     const handleChange = (event) => {
-        setSearchInput(event.target.value);
-        const filtered = persons.filter((person) =>
-            person.name.toLowerCase().includes(event.target.value.toLowerCase())
-        );
-        setFilteredPersons(filtered);
+        const inputValue = event.target.value.toLowerCase();
+        setSearchInput(inputValue);
+        setFilteredPersons(persons.filter((person) =>
+            person.name.toLowerCase().includes(inputValue)
+        ));
     };
 
     const addPerson = (event) => {
@@ -40,7 +50,7 @@ const App = () => {
         }
         const newPerson = { name: newName, number: newNumber };
         setPersons([...persons, newPerson]);
-        setFilteredPersons([...filteredPersons, newPerson]); // Update filteredPersons
+        setFilteredPersons([...filteredPersons, newPerson]); // Update filteredPersons using spread operator
         setNewName('');
         setNewNumber('');
     };
@@ -48,11 +58,8 @@ const App = () => {
     return (
         <div>
             <h2>Phonebook</h2>
-
             <Filter value={searchInput} handleChange={handleChange} />
-
             <h3>Add a new</h3>
-
             <PersonForm
                 newName={newName}
                 newNumber={newNumber}
@@ -60,9 +67,7 @@ const App = () => {
                 handleNumberChange={handleNumberChange}
                 addPerson={addPerson}
             />
-
             <h3>Numbers</h3>
-
             <Persons persons={filteredPersons} />
         </div>
     );
