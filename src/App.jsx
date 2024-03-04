@@ -43,18 +43,28 @@ const App = () => {
 
     const addPerson = (event) => {
         event.preventDefault();
+
         const nameExists = persons.some(person => person.name === newName);
         if (nameExists) {
             alert(`${newName} is already added to the phonebook.`);
             return;
         }
-        const newPerson = { name: newName, number: newNumber };
-        setPersons([...persons, newPerson]);
-        setFilteredPersons([...filteredPersons, newPerson]); // Update filteredPersons using spread operator
-        setNewName('');
-        setNewNumber('');
-    };
 
+        const newPerson = { name: newName, number: newNumber };
+
+        axios.post('http://localhost:3001/persons', newPerson)
+            .then(response => {
+                console.log(response.data);
+
+                setPersons(persons.concat(newPerson));
+                setFilteredPersons(filteredPersons.concat(newPerson));
+                setNewName('');
+                setNewNumber('');
+            })
+            .catch(error => {
+                console.error('Error adding person:', error);
+            });
+    };
     return (
         <div>
             <h2>Phonebook</h2>
