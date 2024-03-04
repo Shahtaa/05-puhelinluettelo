@@ -38,6 +38,25 @@ const App = () => {
             person.name.toLowerCase().includes(inputValue)
         ));
     };
+    const handleDelete = (id, name) => {
+        const confirmDelete = window.confirm(`Delete ${name}?`);
+        if (!confirmDelete) {
+            return; // If user cancels, do nothing
+        }
+
+        personService.remove(id)
+            .then(() => {
+                const updatedPersons = persons.filter(person => person.id !== id);
+                setPersons(updatedPersons);
+                setFilteredPersons(updatedPersons);
+            })
+            .catch(error => {
+                console.error('Error deleting person:', error);
+            });
+    };
+
+
+
     const addPerson = (event) => {
         event.preventDefault();
 
@@ -75,7 +94,7 @@ const App = () => {
                 addPerson={addPerson}
             />
             <h3>Numbers</h3>
-            <Persons persons={filteredPersons} />
+            <Persons persons={filteredPersons} handleDelete={handleDelete} />
         </div>
     );
 };
