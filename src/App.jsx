@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import Filter from './components/Filter';
 import PersonForm from './components/PersonForm';
 import Persons from './components/Persons';
+import personService from './services/persons';
 
 const App = () => {
     const [persons, setPersons] = useState([]);
@@ -11,19 +11,17 @@ const App = () => {
     const [searchInput, setSearchInput] = useState('');
     const [filteredPersons, setFilteredPersons] = useState([]);
 
-
-    const hook = () => {
-        console.log('effect')
-        axios
-            .get('http://localhost:3001/persons')
-            .then(response => {
-                console.log('promise fulfilled')
-                setPersons(response.data);
-                setFilteredPersons(response.data);
+    useEffect(() => {
+        personService.getAll()
+            .then(data => {
+                setPersons(data);
+                setFilteredPersons(data);
             })
-    }
+            .catch(error => {
+                console.error('Error fetching persons:', error);
+            });
+    }, []);
 
-    useEffect(hook, [])
 
     const handleNameChange = (event) => {
         setNewName(event.target.value);
@@ -40,7 +38,6 @@ const App = () => {
             person.name.toLowerCase().includes(inputValue)
         ));
     };
-
     const addPerson = (event) => {
         event.preventDefault();
 
@@ -52,12 +49,10 @@ const App = () => {
 
         const newPerson = { name: newName, number: newNumber };
 
-        axios.post('http://localhost:3001/persons', newPerson)
-            .then(response => {
-                console.log(response.data);
-
-                setPersons(persons.concat(newPerson));
-                setFilteredPersons(filteredPersons.concat(newPerson));
+        personService.create(newPerson)
+            .then(data => {
+                setPersons([...persons, data]);
+                setFilteredPersons([...filteredPersons, data]);
                 setNewName('');
                 setNewNumber('');
             })
@@ -65,6 +60,7 @@ const App = () => {
                 console.error('Error adding person:', error);
             });
     };
+
     return (
         <div>
             <h2>Phonebook</h2>
