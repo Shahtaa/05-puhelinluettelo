@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import Filter from './components/Filter';
 import PersonForm from './components/PersonForm';
-import PersonsList from './components/PersonsList';
+import Persons from './components/Persons';
 import personService from './services/persons';
 
 const App = () => {
     const [persons, setPersons] = useState([]);
     const [newName, setNewName] = useState('');
     const [newNumber, setNewNumber] = useState('');
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchInput, setSearchInput] = useState('');
     const [filteredPersons, setFilteredPersons] = useState([]);
 
     useEffect(() => {
@@ -30,9 +30,9 @@ const App = () => {
         setNewNumber(event.target.value);
     };
 
-    const handleSearchChange = (event) => {
+    const handleChange = (event) => {
         const inputValue = event.target.value.toLowerCase();
-        setSearchQuery(inputValue);
+        setSearchInput(inputValue);
         setFilteredPersons(persons.filter((person) =>
             person.name.toLowerCase().includes(inputValue)
         ));
@@ -53,13 +53,13 @@ const App = () => {
         }
     };
 
-    const handleAddPerson = (event) => {
+    const addPerson = (event) => {
         event.preventDefault();
 
         const existingPerson = persons.find(person => person.name === newName);
 
         if (existingPerson) {
-            const confirmUpdate = window.confirm(`${newName} is already added to the phonebook, replace the old number with a new one?`);
+            const confirmUpdate = window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`);
 
             if (confirmUpdate) {
                 personService.update(existingPerson.id, { ...existingPerson, number: newNumber })
@@ -81,8 +81,8 @@ const App = () => {
 
             personService.create(newPerson)
                 .then(data => {
-                    setPersons(prevPersons => prevPersons.concat(data));
-                    setFilteredPersons(prevFilteredPersons => prevFilteredPersons.concat(data));
+                    setPersons(persons.concat(data));
+                    setFilteredPersons(filteredPersons.concat(data));
                     setNewName('');
                     setNewNumber('');
                 })
@@ -95,17 +95,17 @@ const App = () => {
     return (
         <div>
             <h2>Phonebook</h2>
-            <Filter value={searchQuery} handleChange={handleSearchChange} />
+            <Filter value={searchInput} handleChange={handleChange} />
             <h3>Add a new</h3>
             <PersonForm
                 newName={newName}
                 newNumber={newNumber}
                 handleNameChange={handleNameChange}
                 handleNumberChange={handleNumberChange}
-                addPerson={handleAddPerson}
+                addPerson={addPerson}
             />
             <h3>Numbers</h3>
-            <PersonsList persons={filteredPersons} handleDelete={handleDelete} />
+            <Persons persons={filteredPersons} handleDelete={handleDelete} />
         </div>
     );
 };
