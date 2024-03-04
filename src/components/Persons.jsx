@@ -11,5 +11,4 @@ const Persons = ({ persons, handleDelete }) => {
     );
 };
 
-
 export default Persons;

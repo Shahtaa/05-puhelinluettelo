@@ -22,7 +22,6 @@ const App = () => {
             });
     }, []);
 
-
     const handleNameChange = (event) => {
         setNewName(event.target.value);
     };
@@ -38,48 +37,60 @@ const App = () => {
             person.name.toLowerCase().includes(inputValue)
         ));
     };
+
     const handleDelete = (id, name) => {
         const confirmDelete = window.confirm(`Delete ${name}?`);
-        if (!confirmDelete) {
-            return; // If user cancels, do nothing
+        if (confirmDelete) {
+            personService.remove(id)
+                .then(() => {
+                    const updatedPersons = persons.filter(person => person.id !== id);
+                    setPersons(updatedPersons);
+                    setFilteredPersons(updatedPersons);
+                })
+                .catch(error => {
+                    console.error('Error deleting person:', error);
+                });
         }
-
-        personService.remove(id)
-            .then(() => {
-                const updatedPersons = persons.filter(person => person.id !== id);
-                setPersons(updatedPersons);
-                setFilteredPersons(updatedPersons);
-            })
-            .catch(error => {
-                console.error('Error deleting person:', error);
-            });
     };
-
-
 
     const addPerson = (event) => {
         event.preventDefault();
 
-        const nameExists = persons.some(person => person.name === newName);
-        if (nameExists) {
-            alert(`${newName} is already added to the phonebook.`);
-            return;
+        const existingPerson = persons.find(person => person.name === newName);
+
+        if (existingPerson) {
+            const confirmUpdate = window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`);
+
+            if (confirmUpdate) {
+                personService.update(existingPerson.id, { ...existingPerson, number: newNumber })
+                    .then(updatedPerson => {
+                        const updatedPersons = persons.map(person =>
+                            person.id === updatedPerson.id ? updatedPerson : person
+                        );
+                        setPersons(updatedPersons);
+                        setFilteredPersons(updatedPersons);
+                        setNewName('');
+                        setNewNumber('');
+                    })
+                    .catch(error => {
+                        console.error('Error updating person:', error);
+                    });
+            }
+        } else {
+            const newPerson = { name: newName, number: newNumber };
+
+            personService.create(newPerson)
+                .then(data => {
+                    setPersons(persons.concat(data));
+                    setFilteredPersons(filteredPersons.concat(data));
+                    setNewName('');
+                    setNewNumber('');
+                })
+                .catch(error => {
+                    console.error('Error adding person:', error);
+                });
         }
-
-        const newPerson = { name: newName, number: newNumber };
-
-        personService.create(newPerson)
-            .then(data => {
-                setPersons(persons.concat(data));
-                setFilteredPersons(filteredPersons.concat(data));
-                setNewName('');
-                setNewNumber('');
-            })
-            .catch(error => {
-                console.error('Error adding person:', error);
-            });
     };
-
 
     return (
         <div>
