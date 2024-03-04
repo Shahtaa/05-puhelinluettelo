@@ -48,18 +48,17 @@ const App = () => {
         }
 
         const newPerson = { name: newName, number: newNumber };
-
         personService.create(newPerson)
             .then(data => {
-                setPersons([...persons, data]);
-                setFilteredPersons([...filteredPersons, data]);
+                setPersons(persons.concat(data));
+                setFilteredPersons(filteredPersons.concat(data));
                 setNewName('');
                 setNewNumber('');
             })
             .catch(error => {
                 console.error('Error adding person:', error);
             });
-    };
+    }; git
 
     return (
         <div>
