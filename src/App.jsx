@@ -5,7 +5,6 @@ import Persons from './components/Persons';
 import Notification from './components/Notification';
 import personService from './services/persons';
 
-
 const App = () => {
     const [persons, setPersons] = useState([]);
     const [newName, setNewName] = useState('');
@@ -14,11 +13,14 @@ const App = () => {
     const [filteredPersons, setFilteredPersons] = useState([]);
     const [errorMessage, setErrorMessage] = useState(null);
 
-    useEffect(() => {
-        fetchData();
-    }, []);
+    const showMessage = (message, type) => {
+        setErrorMessage({ message, type });
+        setTimeout(() => {
+            setErrorMessage(null);
+        }, 3000); // Show the message for 3 seconds
+    };
 
-    const fetchData = () => {
+    useEffect(() => {
         personService.getAll()
             .then(data => {
                 setPersons(data);
@@ -27,7 +29,7 @@ const App = () => {
             .catch(error => {
                 console.error('Error fetching persons:', error);
             });
-    };
+    }, []);
 
     const handleNameChange = (event) => {
         setNewName(event.target.value);
@@ -37,7 +39,7 @@ const App = () => {
         setNewNumber(event.target.value);
     };
 
-    const handleSearchChange = (event) => {
+    const handleChange = (event) => {
         const inputValue = event.target.value.toLowerCase();
         setSearchInput(inputValue);
         setFilteredPersons(persons.filter((person) =>
@@ -45,107 +47,92 @@ const App = () => {
         ));
     };
 
-    const handleDeletePerson = (id, name) => {
+    const handleDelete = (id, name) => {
         const confirmDelete = window.confirm(`Delete ${name}?`);
         if (confirmDelete) {
-            deletePerson(id, name);
+            personService.remove(id)
+                .then(() => {
+                    const updatedPersons = persons.filter(person => person.id !== id);
+                    setPersons(updatedPersons);
+                    setFilteredPersons(updatedPersons);
+                    showMessage(`Deleted ${name}`, 'success');
+                })
+                .catch(error => {
+                    console.error('Error deleting person:', error);
+                    if (error.response && error.response.status === 404) {
+                        // Handle the case where the resource doesn't exist
+                        showMessage(`Information of ${name} has already been removed from the server.`, 'error');
+                    } else {
+                        showMessage(`Error deleting ${name}.`, 'error');
+                    }
+                });
         }
     };
-    const deletePerson = (id, name) => {
-        personService.remove(id)
-            .then(() => {
-                const updatedPersons = persons.filter(person => person.id !== id);
-                setPersons(updatedPersons);
-                setFilteredPersons(updatedPersons);
-                showNotification(`Deleted ${name}`, 'success');
-            })
-            .catch(error => {
-                console.error('Error deleting person:', error);
-                if (error.response && error.response.status === 404) {
-
-                    showNotification(`Information of ${name} has already been removed from the server.`, 'error');
-                } else {
-                    showNotification(`Error deleting ${name}.`, 'error');
-                }
-            });
-    };
 
 
-    const handleAddOrUpdatePerson = (event) => {
+    const addPerson = (event) => {
         event.preventDefault();
 
         const existingPerson = persons.find(person => person.name === newName);
 
         if (existingPerson) {
-            updatePerson(existingPerson);
-        } else {
-            addPerson();
-        }
-    };
+            const confirmUpdate = window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`);
 
-    const updatePerson = (existingPerson) => {
-        const confirmUpdate = window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`);
-        if (confirmUpdate) {
-            personService.update(existingPerson.id, { ...existingPerson, number: newNumber })
-                .then(updatedPerson => {
-                    const updatedPersons = persons.map(person =>
-                        person.id === updatedPerson.id ? updatedPerson : person
-                    );
-                    setPersons(updatedPersons);
-                    setFilteredPersons(updatedPersons);
-                    showNotification(`Updated ${newName}'s number`, 'success');
-                    resetForm();
+            if (confirmUpdate) {
+                personService.update(existingPerson.id, { ...existingPerson, number: newNumber })
+                    .then(updatedPerson => {
+                        const updatedPersons = persons.map(person =>
+                            person.id === updatedPerson.id ? updatedPerson : person
+                        );
+                        setPersons(updatedPersons);
+                        setFilteredPersons(updatedPersons);
+                        showMessage(`Updated ${newName}'s number`, 'success');
+                        setNewName('');
+                        setNewNumber('');
+                    })
+                    .catch(error => {
+                        console.error('Error deleting person:', error);
+                        if (error.response && error.response.status === 404) {
+                            // Handle the case where the resource doesn't exist
+                            showMessage(`Information of ${newName} has already been removed from the server.`, 'error');
+                        } else {
+                            showMessage(`Error deleting ${newName}.`, 'error');
+                        }
+                    });
+            }
+        } else {
+            const newPerson = { name: newName, number: newNumber };
+
+            personService.create(newPerson)
+                .then(data => {
+                    setPersons(persons.concat(data));
+                    setFilteredPersons(filteredPersons.concat(data));
+                    showMessage(`Added ${newName}`, 'success');
+                    setNewName('');
+                    setNewNumber('');
                 })
                 .catch(error => {
-                    console.error('Error updating person:', error);
-                    showNotification(`Error updating ${newName}'s number.`, 'error');
+                    console.error('Error adding person:', error);
+                    showMessage(`Error adding ${newName}.`, 'error');
                 });
         }
-    };
-
-    const addPerson = () => {
-        const newPerson = { name: newName, number: newNumber };
-
-        personService.create(newPerson)
-            .then(data => {
-                setPersons(persons.concat(data));
-                setFilteredPersons(filteredPersons.concat(data));
-                showNotification(`Added ${newName}`, 'success');
-                resetForm();
-            })
-            .catch(error => {
-                console.error('Error adding person:', error);
-                showNotification(`Error adding ${newName}.`, 'error');
-            });
-    };
-
-    const showNotification = (message, type) => {
-        setErrorMessage({ message, type });
-        setTimeout(() => {
-            setErrorMessage(null);
-        }, 3000);
-    };
-
-    const resetForm = () => {
-        setNewName('');
-        setNewNumber('');
     };
 
     return (
         <div>
             <h2>Phonebook</h2>
             <Notification message={errorMessage ? errorMessage.message : null} type={errorMessage ? errorMessage.type : null} />
-            <Filter value={searchInput} handleChange={handleSearchChange} />
+            <Filter value={searchInput} handleChange={handleChange} />
             <h3>Add a new</h3>
             <PersonForm
                 newName={newName}
                 newNumber={newNumber}
                 handleNameChange={handleNameChange}
                 handleNumberChange={handleNumberChange}
-                addPerson={handleAddOrUpdatePerson}
+                addPerson={addPerson}
             />
             <h3>Numbers</h3>
-            <Persons persons={filteredPersons} handleDelete={handleDeletePerson} />
+            <Persons persons={filteredPersons} handleDelete={handleDelete} />
         </div>
     );
 };
