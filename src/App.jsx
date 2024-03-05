@@ -91,12 +91,12 @@ const App = () => {
                         setNewNumber('');
                     })
                     .catch(error => {
-                        console.error('Error deleting person:', error);
+                        console.error('Error updating person:', error);
                         if (error.response && error.response.status === 404) {
                             // Handle the case where the resource doesn't exist
                             showMessage(`Information of ${newName} has already been removed from the server.`, 'error');
                         } else {
-                            showMessage(`Error deleting ${newName}.`, 'error');
+                            showMessage(`Error updating ${newName}.`, 'error');
                         }
                     });
             }
