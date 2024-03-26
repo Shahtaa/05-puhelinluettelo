@@ -19,6 +19,7 @@ const App = () => {
             setErrorMessage(null);
         }, 3000); // Show the message for 3 seconds
     };
+
     useEffect(() => {
         personService.getAll()
             .then(data => {
